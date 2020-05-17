@@ -5,15 +5,15 @@ import (
 	"strings"
 )
 
+type Atom struct {
+	TokenType string
+	Value     string
+}
+
 func Tokenize(input string) []string {
 	ret := strings.ReplaceAll(input, "(", " ( ")
 	ret = strings.ReplaceAll(ret, ")", " ) ")
 	return strings.Fields(ret)
-}
-
-type Atom struct {
-	TokenType string
-	Value     string
 }
 
 func Parenthesize(tokens []string) (interface{}, []string) {
@@ -53,4 +53,9 @@ func Categorize(input []rune) Atom {
 			Value:     string(input),
 		}
 	}
+}
+
+func Parser(input string) interface{} {
+	p, _ := Parenthesize(Tokenize(input))
+	return p
 }

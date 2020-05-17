@@ -42,6 +42,23 @@ func TestParenthesize(t *testing.T) {
 				Atom{"literal", "Lisp"},
 			},
 		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Parser(tt.input)
+			if diff := cmp.Diff(got, tt.want); diff != "" {
+				t.Errorf("Parenthesize() differs: (-got +want)\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestParser(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  interface{}
+	}{
 		{
 			"should lex a single atom",
 			`a`,
@@ -80,9 +97,9 @@ func TestParenthesize(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, _ := Parenthesize(Tokenize(tt.input))
+			got := Parser(tt.input)
 			if diff := cmp.Diff(got, tt.want); diff != "" {
-				t.Errorf("Parenthesize() differs: (-got +want)\n%s", diff)
+				t.Errorf("Parser() differs: (-got +want)\n%s", diff)
 			}
 		})
 	}
