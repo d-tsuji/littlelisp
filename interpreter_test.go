@@ -65,6 +65,34 @@ func TestInterpretIf(t *testing.T) {
 	}
 }
 
+func TestInterpretLet(t *testing.T) {
+	type args struct {
+		input string
+		ctx   *Context
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    interface{}
+		wantErr bool
+	}{
+		{"should eval inner expression w names bound", args{input: `(let ((x 1) (y 2)) (x y))`, ctx: nil}, []interface{}{int64(1), int64(2)}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			input := Parser(tt.args.input)
+			got, err := Interpret(input, tt.args.ctx)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Interpret() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if diff := cmp.Diff(got, tt.want); diff != "" {
+				t.Errorf("Interpret() differs: (-got +want)\n%s", diff)
+			}
+		})
+	}
+}
+
 func TestInterpretInvocation(t *testing.T) {
 	type args struct {
 		input string

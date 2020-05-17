@@ -31,6 +31,33 @@ func init() {
 	}
 
 	special = map[interface{}]func(interface{}, *Context) (interface{}, error){
+		"let": func(input interface{}, ctx *Context) (interface{}, error) {
+			s, ok := input.([]interface{})
+			if !ok {
+				return nil, fmt.Errorf("fail to type assertion: %v (%T)", input, input)
+			}
+			ss, ok := s[1].([]interface{})
+			if !ok {
+				return nil, fmt.Errorf("fail to type assertion: %v (%T)", s[1], s[1])
+			}
+			sp := make(map[interface{}]func(x interface{}) (interface{}, error))
+			for _, l := range ss {
+				ls, ok := l.([]interface{})
+				if !ok {
+					return nil, fmt.Errorf("fail to type assertion: %v (%T)", ls, ls)
+				}
+				sp[ls[0].(Atom).Value] = func(x interface{}) (interface{}, error) {
+					return Interpret(x, ctx)
+				}
+			}
+			letCtx := &Context{
+				scope:  sp,
+				parent: ctx,
+			}
+
+			return Interpret(s[2], letCtx)
+		},
+
 		// A literal 1 is assumed to be true.
 		"if": func(input interface{}, ctx *Context) (interface{}, error) {
 			s, ok := input.([]interface{})
