@@ -4,22 +4,48 @@ import (
 	"fmt"
 )
 
+var (
+	library map[interface{}]func(x []interface{}) interface{}
+	special map[interface{}]func(interface{}, *Context) (interface{}, error)
+)
+
+func init() {
+	library = map[interface{}]func(x []interface{}) interface{}{
+		"first": func(x []interface{}) interface{} {
+			return x[0]
+		},
+		"rest": func(x []interface{}) interface{} {
+			return x[1:]
+		},
+		"print": func(x []interface{}) interface{} {
+			fmt.Println(x)
+			return nil
+		},
+	}
+
+	special = map[interface{}]func(interface{}, *Context) (interface{}, error){
+		// A literal 1 is assumed to be true.
+		"if": func(input interface{}, ctx *Context) (interface{}, error) {
+			s, ok := input.([]interface{})
+			if !ok {
+				return nil, fmt.Errorf("invalid input: %v", s)
+			}
+			n, err := Interpret(s[1], ctx)
+			if err != nil {
+				return nil, err
+			}
+			if n == int64(1) {
+				return Interpret(s[2], ctx)
+			} else {
+				return Interpret(s[3], ctx)
+			}
+		},
+	}
+}
+
 type Context struct {
 	scope  map[interface{}]func(x []interface{}) interface{}
 	parent *Context
-}
-
-var library = map[interface{}]func(x []interface{}) interface{}{
-	"first": func(x []interface{}) interface{} {
-		return x[0]
-	},
-	"rest": func(x []interface{}) interface{} {
-		return x[1:]
-	},
-	"print": func(x []interface{}) interface{} {
-		fmt.Println(x)
-		return nil
-	},
 }
 
 func (c *Context) get(identifier interface{}) interface{} {
@@ -41,8 +67,7 @@ func Interpret(input interface{}, ctx *Context) (interface{}, error) {
 	}
 	s, ok := input.([]interface{})
 	if ok {
-		// TODO
-		fmt.Println(s)
+		return interpretList(s, ctx)
 	} else {
 		a, ok := input.(Atom)
 		if !ok {
@@ -55,5 +80,16 @@ func Interpret(input interface{}, ctx *Context) (interface{}, error) {
 		}
 	}
 
+	return nil, nil
+}
+
+func interpretList(input []interface{}, ctx *Context) (interface{}, error) {
+	fmt.Println(input[0])
+	v, exists := special[input[0].(Atom).Value]
+	if exists {
+		return v(input, ctx)
+	} else {
+		// TODO
+	}
 	return nil, nil
 }
