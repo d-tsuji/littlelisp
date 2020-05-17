@@ -2,12 +2,13 @@ package littlelisp
 
 import (
 	"log"
+	"strconv"
 	"strings"
 )
 
 type Atom struct {
 	TokenType string
-	Value     string
+	Value     interface{}
 }
 
 func Tokenize(input string) []string {
@@ -46,6 +47,11 @@ func Categorize(input []rune) Atom {
 		return Atom{
 			TokenType: "literal",
 			Value:     string(input[1 : len(input)-1]),
+		}
+	} else if num, err := strconv.ParseInt(string(input), 10, 64); err == nil {
+		return Atom{
+			TokenType: "literal",
+			Value:     num,
 		}
 	} else {
 		return Atom{
