@@ -5,21 +5,28 @@ import (
 )
 
 var (
-	library map[interface{}]func(x []interface{}) interface{}
+	library map[interface{}]func(x interface{}) (interface{}, error)
 	special map[interface{}]func(interface{}, *Context) (interface{}, error)
 )
 
 func init() {
-	library = map[interface{}]func(x []interface{}) interface{}{
-		"first": func(x []interface{}) interface{} {
-			return x[0]
+	library = map[interface{}]func(x interface{}) (interface{}, error){
+		"first": func(x interface{}) (interface{}, error) {
+			xs, ok := x.([]interface{})
+			if !ok {
+				return nil, fmt.Errorf("fail to type assertion: %v (%T)", x, x)
+			}
+			return xs[0], nil
 		},
-		"rest": func(x []interface{}) interface{} {
-			return x[1:]
+		"rest": func(x interface{}) (interface{}, error) {
+			xs, ok := x.([]interface{})
+			if !ok {
+				return nil, fmt.Errorf("fail to type assertion: %v (%T)", x, x)
+			}
+			return xs[1:], nil
 		},
-		"print": func(x []interface{}) interface{} {
-			fmt.Println(x)
-			return nil
+		"print": func(x interface{}) (interface{}, error) {
+			return x, nil
 		},
 	}
 
@@ -44,7 +51,7 @@ func init() {
 }
 
 type Context struct {
-	scope  map[interface{}]func(x []interface{}) interface{}
+	scope  map[interface{}]func(x interface{}) (interface{}, error)
 	parent *Context
 }
 
@@ -84,12 +91,23 @@ func Interpret(input interface{}, ctx *Context) (interface{}, error) {
 }
 
 func interpretList(input []interface{}, ctx *Context) (interface{}, error) {
-	fmt.Println(input[0])
 	v, exists := special[input[0].(Atom).Value]
 	if exists {
 		return v(input, ctx)
 	} else {
-		// TODO
+		list := make([]interface{}, len(input))
+		for i, v := range input {
+			tmp, err := Interpret(v, ctx)
+			if err != nil {
+				return nil, err
+			}
+			list[i] = tmp
+		}
+		f, ok := list[0].(func(x interface{}) (interface{}, error))
+		if ok {
+			return f(list[1])
+		} else {
+			return list, nil
+		}
 	}
-	return nil, nil
 }
