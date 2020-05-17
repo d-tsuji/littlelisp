@@ -47,7 +47,7 @@ func init() {
 					return nil, fmt.Errorf("fail to type assertion: %v (%T)", ls, ls)
 				}
 				sp[ls[0].(Atom).Value] = func(x interface{}) (interface{}, error) {
-					return Interpret(x, ctx)
+					return Interpret(ls[1], ctx)
 				}
 			}
 			letCtx := &Context{
